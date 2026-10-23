@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}SAS — Dashboard{% endblock %}
+{% block content %}
+<section aria-labelledby="t-kpi">
+  <h2 id="t-kpi">Indicadores</h2>
+  <div id="kpis" class="kpis"></div>
+</section>
+<section aria-labelledby="t-par">
+  <h2 id="t-par">Pareto de motivos (minutos)</h2>
+  <div class="grafico"><canvas id="pareto" role="img" aria-label="Gráfico de Pareto; os mesmos dados estão na tabela abaixo"></canvas></div>
+  <div class="tabela-wrap">
+    <table>
+      <caption>Tabela do Pareto</caption>
+      <thead><tr><th scope="col">Motivo</th><th scope="col">Tipo</th><th scope="col">Ocorrências</th>
+        <th scope="col">Minutos</th><th scope="col">% acumulado</th></tr></thead>
+      <tbody id="tab-pareto"></tbody>
+    </table>
+  </div>
+  <p><a class="btn sec" href="/api/v1/paradas" download="paradas.json">Baixar base (JSON)</a></p>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

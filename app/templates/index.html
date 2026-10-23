@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="painel" aria-labelledby="t-op">
+  <h2 id="t-op">Operador</h2>
+  <label for="operador">Nome do operador <span aria-hidden="true">*</span></label>
+  <input id="operador" type="text" list="lista-operadores" maxlength="80"
+         autocomplete="name" required aria-required="true" placeholder="Digite seu nome">
+  <datalist id="lista-operadores"></datalist>
+  <p class="dica">O nome fica salvo neste aparelho para os próximos apontamentos.</p>
+</section>
+
+<section aria-labelledby="t-eq">
+  <h2 id="t-eq">Equipamentos</h2>
+  <div id="grade" class="grade" aria-live="polite"></div>
+</section>
+
+<section aria-labelledby="t-pend" id="secao-pend" hidden>
+  <h2 id="t-pend">Paradas aguardando motivo</h2>
+  <div id="pendentes"></div>
+</section>
+
+<section aria-labelledby="t-ult">
+  <h2 id="t-ult">Últimas paradas</h2>
+  <div class="tabela-wrap">
+    <table>
+      <caption class="sr-only">Últimas 20 paradas registradas</caption>
+      <thead><tr><th scope="col">Equipamento</th><th scope="col">Operador</th><th scope="col">Início</th>
+        <th scope="col">Duração (min)</th><th scope="col">Motivo</th><th scope="col">Status</th></tr></thead>
+      <tbody id="ultimas"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/app.js') }}"></script>{% endblock %}
