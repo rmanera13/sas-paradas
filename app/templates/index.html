@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="painel" aria-labelledby="t-op">
+<section class="painel painel-op" aria-labelledby="t-op">
+  <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="marca-dagua">
   <h2 id="t-op">Operador</h2>
   <label for="operador">Nome do operador <span aria-hidden="true">*</span></label>
   <input id="operador" type="text" list="lista-operadores" maxlength="80"

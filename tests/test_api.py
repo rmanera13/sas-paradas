@@ -1,11 +1,4 @@
-import pytest
-from app import create_app
-
-
-@pytest.fixture
-def client(tmp_path):
-    app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "t.sqlite")})
-    return app.test_client()
+from app.versao import __version__
 
 
 def abrir(c, eq=1, op="João"):
@@ -13,7 +6,8 @@ def abrir(c, eq=1, op="João"):
 
 
 def test_health(client):
-    assert client.get("/api/v1/health").get_json() == {"status": "ok"}
+    r = client.get("/api/v1/health").get_json()
+    assert r["status"] == "ok" and r["versao"] == __version__
 
 
 def test_cinco_maquinas(client):
@@ -91,3 +85,16 @@ def test_titulo_e_acessibilidade(client):
 
 def test_dashboard(client):
     assert client.get("/dashboard").status_code == 200
+
+
+def test_versao_2(client):
+    assert __version__.startswith("2.")
+    assert f"v{__version__}" in client.get("/").get_data(as_text=True)
+
+
+def test_dados_persistem_entre_reinicios(app, client):
+    """Reiniciar o app (create_app de novo) NÃO pode apagar as paradas."""
+    abrir(client, 3, "Ana")
+    from app import create_app
+    novo = create_app({"TESTING": True, "DATABASE": app.config["DATABASE"]}).test_client()
+    assert len(novo.get("/api/v1/paradas").get_json()) == 1

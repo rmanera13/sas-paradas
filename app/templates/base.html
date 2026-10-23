@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Paradas de Máquina · Weise{% endblock %}</title>
-  <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/icone.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -21,7 +21,10 @@
     </nav>
   </header>
   <main id="conteudo" tabindex="-1">{% block content %}{% endblock %}</main>
-  <footer class="rodape">Weise · Sistema de Apontamento de Paradas</footer>
+  <footer class="rodape">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="logo-rodape">
+    <span>Weise · Sistema de Apontamento de Paradas · <strong>v{{ versao }}</strong></span>
+  </footer>
   <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
   {% block scripts %}{% endblock %}
 </body>

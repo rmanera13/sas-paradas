@@ -12,6 +12,12 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     from . import db, api
+    from .versao import __version__
+    app.config["VERSAO"] = __version__
+
+    @app.context_processor
+    def versao():
+        return {"versao": __version__}
     db.init_app(app)
     app.register_blueprint(api.bp)
 

@@ -54,7 +54,12 @@ caption{text-align:left;font-weight:600;padding:.5rem .7rem}
 .kpi b{display:block;font-size:1.7rem;color:var(--pri)}
 .grafico{background:var(--card);border-radius:8px;padding:1rem;margin-bottom:.8rem;height:340px}
 
-.rodape{text-align:center;color:var(--muted);font-size:.85rem;padding:1rem;border-top:1px solid #d5dbe0;background:#fff}
+.rodape{display:flex;align-items:center;justify-content:center;gap:.7rem;color:var(--muted);font-size:.85rem;padding:.8rem 1rem;border-top:4px solid var(--pri);background:#fff}
+.logo-rodape{height:36px;width:auto}
+.painel-op{position:relative;overflow:hidden}
+.painel-op>*:not(.marca-dagua){position:relative}
+.marca-dagua{position:absolute;right:1rem;top:50%;transform:translateY(-50%);height:85%;max-height:150px;opacity:.12;pointer-events:none}
+@media (max-width:560px){.marca-dagua{display:none}}
 .aviso{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:.7rem 1.2rem;border-radius:6px;display:none;max-width:90vw}
 .aviso.on{display:block}.aviso.erro{background:var(--stop)}
 @media (max-width:560px){.logo{height:44px}.topo h1{font-size:1.15rem}}

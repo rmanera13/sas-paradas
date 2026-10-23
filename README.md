@@ -14,13 +14,13 @@ Projeto Integrador — UNIVESP.
 | Requisito | Implementação | Arquivos |
 |---|---|---|
 | Framework web | Flask 3 (*application factory* + *blueprints*) | `app/__init__.py`, `app/api.py` |
-| Banco de dados | SQLite relacional, 4 tabelas em 3FN, chaves estrangeiras e `CHECK` | `app/schema.sql`, `app/db.py` |
+| Banco de dados | PostgreSQL em produção / SQLite local, 4 tabelas em 3FN, chaves estrangeiras e `CHECK` | `app/schema.sql`, `app/db.py` |
 | Script web (JavaScript) | JS puro (ES2021): `fetch`, cronômetro, validação, render dinâmico | `app/static/js/app.js`, `dashboard.js` |
 | Nuvem | Dockerfile, `Procfile` (gunicorn) e `render.yaml` com disco persistente e *health check* | `Dockerfile`, `render.yaml`, `Procfile` |
 | Uso de API | API REST própria versionada (`/api/v1`), consumida pelo front-end | `app/api.py` |
 | Acessibilidade | WCAG 2.1 AA: `lang`, *skip link*, ARIA, `aria-live`, foco visível, contraste, alvos ≥ 44 px, tabela alternativa ao gráfico | `app/templates/*`, `app/static/css/style.css` |
 | Controle de versão | Repositório Git + `.gitignore` + pipeline CI no GitHub Actions | `.github/workflows/ci.yml` |
-| Testes | 15 testes automatizados com pytest (regras de negócio, erros e acessibilidade) | `tests/test_api.py` |
+| Testes | 17 testes automatizados, rodando em SQLite e PostgreSQL com pytest (regras de negócio, erros e acessibilidade) | `tests/test_api.py` |
 | Análise de dados (opcional) | Pareto com percentual acumulado, KPIs e MTTR + gráfico Chart.js | `/dashboard`, `app/api.py` |
 
 ## Como executar
@@ -30,7 +30,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 export FLASK_APP=app          # Windows: set FLASK_APP=app
-flask init-db                 # cria o esquema e o catálogo de motivos
+flask init-db                 # opcional: o app já cria o banco ao iniciar
 flask run                     # http://127.0.0.1:5000
 ```
 
@@ -88,12 +88,13 @@ Integração com o historiador PI para captura automática do tempo de parada,
 autenticação por crachá/QR Code e exportação para o Power BI.
 
 
-## Alterações (out/2026)
-- Título **Paradas de Máquina** e identidade visual **Weise** (azul do logo, preto e branco).
-- Logo: salve a imagem como `app/static/img/logo.png` (também usada como ícone da aba).
-- Equipamentos: **Máquina 01 a Máquina 05** (lista em `app/db.py`, variável `EQUIPAMENTOS`).
-- **Operador digitável**, com autocompletar dos nomes já usados; o nome fica salvo no aparelho.
-- O banco é criado automaticamente ao iniciar (não precisa rodar `flask init-db` no Render).
-- `render.yaml` no plano free (sem disco; banco em `/tmp`, **apagado a cada deploy/reinício**).
-  Para guardar os dados: `plan: starter` + bloco `disk` com `mountPath: /var/data` e `DATABASE_URL=/var/data/sas.sqlite`.
-- Power BI: Obter dados → Web → `https://SUA-URL.onrender.com/api/v1/paradas`.
+## Banco de dados (v2.0)
+- **Produção:** PostgreSQL. Defina `DATABASE_URL=postgresql://...` no Render (Environment).
+- **Local/testes:** sem `DATABASE_URL`, usa o arquivo SQLite `sas.sqlite`.
+- As tabelas e a carga inicial (Máquina 01–05 e motivos) são criadas automaticamente na 1ª execução. Os dados **nunca** são apagados ao reiniciar.
+- Para mudar as máquinas, edite `EQUIPAMENTOS` em `app/db.py`. As que saírem da lista ficam inativas, e o histórico é mantido.
+- Power BI: Obter dados → Web → `https://SUA-URL.onrender.com/api/v1/paradas`, ou conecte direto no PostgreSQL.
+
+## Controle de versão
+- Versão atual em `VERSION`; histórico em `CHANGELOG.md`.
+- Ao lançar uma versão: atualize `VERSION` e `CHANGELOG.md` e crie uma *Release* no GitHub com a tag `vX.Y.Z`.

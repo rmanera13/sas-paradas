@@ -1,7 +1,7 @@
-import sqlite3
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
-from .db import get_db
+from .db import get_db, INTEGRITY_ERRORS
+from .versao import __version__
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
@@ -26,41 +26,43 @@ def erro(msg, code=400):
 
 
 def buscar(pid):
-    row = get_db().execute(SELECT_PARADA + " WHERE p.id = ?", (pid,)).fetchone()
-    return dict(row) if row else None
+    return get_db().one(SELECT_PARADA + " WHERE p.id = ?", (pid,))
 
 
 def operador_id(nome):
     """Operador e digitado: cria o cadastro na primeira vez e reaproveita depois."""
     db = get_db()
-    db.execute("INSERT OR IGNORE INTO usuario (nome) VALUES (?)", (nome,))
-    return db.execute("SELECT id FROM usuario WHERE nome = ?", (nome,)).fetchone()["id"]
+    achou = db.one("SELECT id FROM usuario WHERE lower(nome) = lower(?)", (nome,))
+    if achou:
+        return achou["id"]
+    return db.one("INSERT INTO usuario (nome) VALUES (?) RETURNING id", (nome,))["id"]
 
 
 @bp.get("/health")
 def health():
-    get_db().execute("SELECT 1")
-    return jsonify({"status": "ok"})
+    db = get_db()
+    db.one("SELECT 1 AS ok")
+    return jsonify({"status": "ok", "versao": __version__,
+                    "banco": "postgresql" if db.pg else "sqlite"})
 
 
 @bp.get("/equipamentos")
 def equipamentos():
-    rows = get_db().execute("""
+    rows = get_db().all("""
         SELECT e.id, e.nome,
                (SELECT p.id FROM parada p WHERE p.equipamento_id = e.id AND p.fim IS NULL) AS parada_aberta_id
-        FROM equipamento e WHERE e.ativo = 1 ORDER BY e.nome""").fetchall()
-    return jsonify([dict(r) for r in rows])
+        FROM equipamento e WHERE e.ativo = 1 ORDER BY e.nome""")
+    return jsonify(rows)
 
 
 @bp.get("/motivos")
 def motivos():
-    rows = get_db().execute("SELECT * FROM motivo ORDER BY codigo").fetchall()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(get_db().all("SELECT * FROM motivo ORDER BY codigo"))
 
 
 @bp.get("/operadores")
 def operadores():
-    rows = get_db().execute("SELECT nome FROM usuario ORDER BY nome").fetchall()
+    rows = get_db().all("SELECT nome FROM usuario ORDER BY nome")
     return jsonify([r["nome"] for r in rows])
 
 
@@ -75,8 +77,8 @@ def listar():
         sql += " AND p.inicio >= ?"; args.append(request.args["desde"])
     if request.args.get("ate"):
         sql += " AND p.inicio <= ?"; args.append(request.args["ate"])
-    sql += " ORDER BY p.inicio DESC"
-    return jsonify([dict(r) for r in get_db().execute(sql, args).fetchall()])
+    sql += " ORDER BY p.inicio DESC, p.id DESC"
+    return jsonify(get_db().all(sql, args))
 
 
 @bp.post("/paradas")
@@ -91,17 +93,18 @@ def abrir():
     if len(nome) > 80:
         return erro("Nome do operador muito longo (máximo 80).")
     db = get_db()
-    if not db.execute("SELECT 1 FROM equipamento WHERE id = ? AND ativo = 1", (eq,)).fetchone():
+    if not db.one("SELECT 1 AS ok FROM equipamento WHERE id = ? AND ativo = 1", (eq,)):
         return erro("Equipamento não encontrado.", 404)
     try:
-        cur = db.execute(
-            "INSERT INTO parada (equipamento_id, usuario_id, inicio, status) VALUES (?, ?, ?, 'ABERTA')",
+        novo = db.one(
+            "INSERT INTO parada (equipamento_id, usuario_id, inicio, status) "
+            "VALUES (?, ?, ?, 'ABERTA') RETURNING id",
             (eq, operador_id(nome), agora()))
         db.commit()
-    except sqlite3.IntegrityError:
+    except INTEGRITY_ERRORS:
         db.rollback()
         return erro("Já existe uma parada aberta neste equipamento.", 409)
-    return jsonify(buscar(cur.lastrowid)), 201
+    return jsonify(buscar(novo["id"])), 201
 
 
 @bp.patch("/paradas/<int:pid>")
@@ -114,7 +117,7 @@ def classificar(pid):
     dados = request.get_json(silent=True) or {}
     mid = dados.get("motivo_id")
     db = get_db()
-    if not mid or not db.execute("SELECT 1 FROM motivo WHERE id = ?", (mid,)).fetchone():
+    if not mid or not db.one("SELECT 1 AS ok FROM motivo WHERE id = ?", (mid,)):
         return erro("Informe um motivo válido.")
     novo = "FECHADA" if p["status"] == "AGUARDANDO_MOTIVO" else "ABERTA"
     db.execute("UPDATE parada SET motivo_id = ?, observacao = ?, status = ? WHERE id = ?",
@@ -142,12 +145,13 @@ def retomar(pid):
 
 @bp.get("/analytics/pareto")
 def pareto():
-    rows = get_db().execute("""
-        SELECT m.codigo, m.descricao, m.programado, ROUND(SUM(p.duracao_min), 2) AS minutos,
+    rows = get_db().all("""
+        SELECT m.codigo, m.descricao, m.programado,
+               ROUND(CAST(SUM(p.duracao_min) AS NUMERIC), 2) AS minutos,
                COUNT(*) AS ocorrencias
         FROM parada p JOIN motivo m ON m.id = p.motivo_id
         WHERE p.status = 'FECHADA'
-        GROUP BY m.id ORDER BY minutos DESC""").fetchall()
+        GROUP BY m.id, m.codigo, m.descricao, m.programado ORDER BY minutos DESC""")
     total = sum(r["minutos"] or 0 for r in rows)
     acum, out = 0, []
     for i, r in enumerate(rows, 1):
@@ -160,15 +164,15 @@ def pareto():
 
 @bp.get("/analytics/resumo")
 def resumo():
-    r = get_db().execute("""
+    db = get_db()
+    d = db.one("""
         SELECT COUNT(*) AS total_paradas,
-               COALESCE(ROUND(SUM(p.duracao_min), 2), 0) AS minutos_total,
-               COALESCE(ROUND(AVG(p.duracao_min), 2), 0) AS mttr_min,
-               COALESCE(ROUND(SUM(CASE WHEN m.programado = 1 THEN p.duracao_min END), 2), 0) AS min_programado,
-               COALESCE(ROUND(SUM(CASE WHEN m.programado = 0 THEN p.duracao_min END), 2), 0) AS min_nao_programado
+               COALESCE(ROUND(CAST(SUM(p.duracao_min) AS NUMERIC), 2), 0) AS minutos_total,
+               COALESCE(ROUND(CAST(AVG(p.duracao_min) AS NUMERIC), 2), 0) AS mttr_min,
+               COALESCE(ROUND(CAST(SUM(CASE WHEN m.programado = 1 THEN p.duracao_min END) AS NUMERIC), 2), 0) AS min_programado,
+               COALESCE(ROUND(CAST(SUM(CASE WHEN m.programado = 0 THEN p.duracao_min END) AS NUMERIC), 2), 0) AS min_nao_programado
         FROM parada p JOIN motivo m ON m.id = p.motivo_id
-        WHERE p.status = 'FECHADA'""").fetchone()
-    d = dict(r)
-    d["paradas_abertas"] = get_db().execute(
-        "SELECT COUNT(*) FROM parada WHERE status != 'FECHADA'").fetchone()[0]
+        WHERE p.status = 'FECHADA'""")
+    d["paradas_abertas"] = db.one(
+        "SELECT COUNT(*) AS n FROM parada WHERE status <> 'FECHADA'")["n"]
     return jsonify(d)

@@ -1,6 +1,6 @@
-# Deploy em nuvem (Render.com - plano gratuito)
-# Plano free nao aceita disco: o banco fica em /tmp e e recriado a cada deploy/reinicio.
-# Para guardar os dados: troque plan para starter e use o bloco disk (ver README).
+# Paradas de Máquina · Weise — v2.0.0
+# Os dados ficam num PostgreSQL externo (ex.: Neon), então NÃO se perdem em deploy/reinício.
+# Informe a connection string em: Render > serviço > Environment > DATABASE_URL
 services:
   - type: web
     name: sas-paradas
@@ -11,4 +11,4 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: /tmp/sas.sqlite
+        sync: false   # o Render pede o valor na criação; fica fora do GitHub (segurança)
