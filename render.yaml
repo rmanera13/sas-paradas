@@ -1,0 +1,14 @@
+# Deploy em nuvem (Render.com - plano gratuito)
+# Plano free nao aceita disco: o banco fica em /tmp e e recriado a cada deploy/reinicio.
+# Para guardar os dados: troque plan para starter e use o bloco disk (ver README).
+services:
+  - type: web
+    name: sas-paradas
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: /tmp/sas.sqlite

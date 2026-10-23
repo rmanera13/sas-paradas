@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SAS — Apontamento de Paradas{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <h1>SAS · Paradas</h1>
+    <nav aria-label="Principal">
+      <a href="/" {% if request.path == '/' %}aria-current="page"{% endif %}>Apontamento</a>
+      <a href="/dashboard" {% if request.path == '/dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+    </nav>
+  </header>
+  <main id="conteudo" tabindex="-1">{% block content %}{% endblock %}</main>
+  <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
