@@ -3,7 +3,7 @@ import sqlite3
 import click
 from flask import current_app, g
 
-EQUIPAMENTOS = [f"Máquina {i:02d}" for i in range(1, 11)]  # Máquina 01 ... Máquina 10
+EQUIPAMENTOS = [f"Máquina {i:02d}" for i in range(1, 6)]  # Máquina 01 ... Máquina 05
 
 MOTIVOS = [
     # codigo, descricao, categoria, programado
@@ -26,8 +26,7 @@ MOTIVOS = [
 def get_db():
     if "db" not in g:
         path = current_app.config["DATABASE"]
-        d = os.path.dirname(os.path.abspath(path))
-        os.makedirs(d, exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         g.db = sqlite3.connect(path, timeout=10)
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
@@ -43,6 +42,9 @@ def close_db(e=None):
 def seed(db):
     db.executemany("INSERT OR IGNORE INTO equipamento (nome) VALUES (?)",
                    [(n,) for n in EQUIPAMENTOS])
+    # Mantem ativas somente as maquinas da lista (desativa as antigas, sem apagar historico)
+    db.execute("UPDATE equipamento SET ativo = CASE WHEN nome IN (%s) THEN 1 ELSE 0 END"
+               % ",".join("?" * len(EQUIPAMENTOS)), EQUIPAMENTOS)
     db.executemany("INSERT OR IGNORE INTO motivo (codigo, descricao, categoria, programado) "
                    "VALUES (?, ?, ?, ?)", MOTIVOS)
     db.commit()
@@ -70,7 +72,7 @@ def init_db():
 def init_db_command():
     """Recria o banco do zero (APAGA os dados)."""
     init_db()
-    click.echo("Banco recriado com Máquina 01-10 e catálogo de motivos.")
+    click.echo("Banco recriado com Máquina 01-05 e catálogo de motivos.")
 
 
 def init_app(app):

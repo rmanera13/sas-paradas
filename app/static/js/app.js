@@ -3,7 +3,7 @@ const API = "/api/v1";
 const $ = (s) => document.querySelector(s);
 const opInput = $("#operador");
 let motivos = [];
-let paradasAbertas = {}; // equipamento_id -> parada
+let paradasAbertas = {};
 
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtData = (iso) => (iso ? new Date(iso).toLocaleString("pt-BR") : "—");
@@ -124,7 +124,6 @@ document.addEventListener("click", async (ev) => {
 });
 
 setInterval(() => document.querySelectorAll(".crono").forEach((c) => (c.textContent = cronometro(c.dataset.inicio))), 1000);
-// Atualiza a tela a cada 30 s (outros operadores), sem atrapalhar quem está preenchendo
 setInterval(() => { if (!document.activeElement.closest(".card,.pend")) carregar().catch(() => {}); }, 30000);
 
 (async () => {

@@ -20,8 +20,8 @@
       data: {
         labels: p.map((x) => x.codigo),
         datasets: [
-          { type: "bar", label: "Minutos", data: p.map((x) => x.minutos), backgroundColor: "#0b4f8a", yAxisID: "y" },
-          { type: "line", label: "% acumulado", data: p.map((x) => x.pct_acumulado), borderColor: "#b00020", yAxisID: "y1" },
+          { type: "bar", label: "Minutos", data: p.map((x) => x.minutos), backgroundColor: "#2b5fab", yAxisID: "y" },
+          { type: "line", label: "% acumulado", data: p.map((x) => x.pct_acumulado), borderColor: "#111", backgroundColor: "#111", yAxisID: "y1" },
         ],
       },
       options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true }, y1: { position: "right", min: 0, max: 100 } } },

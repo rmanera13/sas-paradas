@@ -45,8 +45,7 @@ def health():
 
 @bp.get("/equipamentos")
 def equipamentos():
-    db = get_db()
-    rows = db.execute("""
+    rows = get_db().execute("""
         SELECT e.id, e.nome,
                (SELECT p.id FROM parada p WHERE p.equipamento_id = e.id AND p.fim IS NULL) AS parada_aberta_id
         FROM equipamento e WHERE e.ativo = 1 ORDER BY e.nome""").fetchall()

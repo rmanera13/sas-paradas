@@ -89,9 +89,11 @@ autenticação por crachá/QR Code e exportação para o Power BI.
 
 
 ## Alterações (out/2026)
-- Equipamentos fixos: **Máquina 01 a Máquina 10** (carga inicial em `app/db.py`).
-- **Operador digitável**: o operador digita o nome; o sistema cadastra na 1ª vez e reaproveita depois (autocompletar). O nome fica salvo no aparelho.
-- O banco é criado automaticamente ao iniciar o app (não precisa rodar `flask init-db` no Render).
-- `render.yaml` ajustado ao plano free (sem disco; banco em `/tmp`, **apagado a cada deploy/reinício**).
+- Título **Paradas de Máquina** e identidade visual **Weise** (azul do logo, preto e branco).
+- Logo: salve a imagem como `app/static/img/logo.png` (também usada como ícone da aba).
+- Equipamentos: **Máquina 01 a Máquina 05** (lista em `app/db.py`, variável `EQUIPAMENTOS`).
+- **Operador digitável**, com autocompletar dos nomes já usados; o nome fica salvo no aparelho.
+- O banco é criado automaticamente ao iniciar (não precisa rodar `flask init-db` no Render).
+- `render.yaml` no plano free (sem disco; banco em `/tmp`, **apagado a cada deploy/reinício**).
   Para guardar os dados: `plan: starter` + bloco `disk` com `mountPath: /var/data` e `DATABASE_URL=/var/data/sas.sqlite`.
 - Power BI: Obter dados → Web → `https://SUA-URL.onrender.com/api/v1/paradas`.
