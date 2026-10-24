@@ -38,6 +38,8 @@ MOTIVOS = [
     ("ADM-03", "Reunião / treinamento", "ADM", 1),
 ]
 
+LOCK_ID = 7270021  # identificador do lock de criação do banco (PostgreSQL)
+
 INTEGRITY_ERRORS = (sqlite3.IntegrityError,) + ((psycopg.IntegrityError,) if psycopg else ())
 
 
@@ -128,11 +130,23 @@ def seed(db):
 
 
 def ensure_db():
-    """Cria as tabelas que faltarem e a carga inicial. NUNCA apaga dados."""
+    """Cria as tabelas que faltarem e a carga inicial. NUNCA apaga dados.
+
+    No PostgreSQL usa um advisory lock: se vários workers do gunicorn subirem ao
+    mesmo tempo, só um cria as tabelas por vez (evita UniqueViolation em pg_type).
+    """
     db = get_db()
-    _schema(db)
-    seed(db)
-    close_db()
+    try:
+        if db.pg:
+            db.one("SELECT pg_advisory_lock(?) AS ok", (LOCK_ID,))
+        _schema(db)
+        seed(db)
+    finally:
+        if db.pg:
+            db.rollback()  # encerra transação pendente (se houve erro) antes de liberar
+            db.one("SELECT pg_advisory_unlock(?) AS ok", (LOCK_ID,))
+            db.commit()
+        close_db()
 
 
 @click.command("init-db")

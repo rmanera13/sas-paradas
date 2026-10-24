@@ -7,6 +7,13 @@ O projeto segue o **Versionamento Semântico** (`MAJOR.MINOR.PATCH`):
 
 A versão atual fica no arquivo `VERSION`. Ela aparece no rodapé do site e em `/api/v1/health`.
 
+## [2.0.1] — 2026-10-23
+### Corrigido
+- Falha no deploy com PostgreSQL (`UniqueViolation: pg_type_typname_nsp_index`, chave `usuario`):
+  os 2 workers do gunicorn criavam as tabelas ao mesmo tempo.
+  - A criação do banco agora usa *advisory lock* do PostgreSQL (um worker por vez).
+  - O gunicorn sobe com `--preload`, então o banco é preparado uma única vez.
+
 ## [2.0.0] — 2026-10-23
 ### Adicionado
 - Banco **PostgreSQL** para produção: os dados ficam salvos permanentemente (não se perdem em deploy ou reinício).
