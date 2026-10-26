@@ -3,8 +3,31 @@
 {% block content %}
 <section aria-labelledby="t-kpi">
   <h2 id="t-kpi">Indicadores</h2>
+  <div class="filtro-periodo">
+    <label for="dias">Período do MTBF</label>
+    <select id="dias">
+      <option value="7">Últimos 7 dias</option>
+      <option value="30" selected>Últimos 30 dias</option>
+      <option value="90">Últimos 90 dias</option>
+      <option value="365">Últimos 12 meses</option>
+    </select>
+  </div>
   <div id="kpis" class="kpis"></div>
 </section>
+
+<section aria-labelledby="t-mtbf">
+  <h2 id="t-mtbf">MTBF por máquina</h2>
+  <div class="tabela-wrap">
+    <table>
+      <caption id="cap-mtbf">MTBF = horas em operação ÷ nº de falhas (paradas não programadas)</caption>
+      <thead><tr><th scope="col">Equipamento</th><th scope="col">Horas em operação</th>
+        <th scope="col">Horas paradas</th><th scope="col">Falhas</th>
+        <th scope="col">MTBF (h)</th><th scope="col">MTTR falhas (min)</th></tr></thead>
+      <tbody id="tab-mtbf"></tbody>
+    </table>
+  </div>
+</section>
+
 <section aria-labelledby="t-par">
   <h2 id="t-par">Pareto de motivos (minutos)</h2>
   <div class="grafico"><canvas id="pareto" role="img" aria-label="Gráfico de Pareto; os mesmos dados estão na tabela abaixo"></canvas></div>
@@ -16,8 +39,14 @@
       <tbody id="tab-pareto"></tbody>
     </table>
   </div>
-  <p><a class="btn sec" href="/api/v1/paradas" download="paradas.json">Baixar base (JSON)</a></p>
+  <p><a id="btn-excel" class="btn sec" href="/api/v1/export.xlsx?dias=30">⬇ Baixar base (Excel)</a></p>
 </section>
+
+<style>
+  .filtro-periodo{margin-bottom:.8rem}
+  .filtro-periodo select{max-width:240px}
+  #tab-mtbf tr.total td{font-weight:700;background:#e9eef7}
+</style>
 {% endblock %}
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>

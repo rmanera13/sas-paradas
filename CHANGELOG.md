@@ -7,6 +7,19 @@ O projeto segue o **Versionamento Semântico** (`MAJOR.MINOR.PATCH`):
 
 A versão atual fica no arquivo `VERSION`. Ela aparece no rodapé do site e em `/api/v1/health`.
 
+## [2.1.0] — 2026-10-25
+### Adicionado
+- Indicador **MTBF** (tempo médio entre falhas), geral e por máquina, no dashboard e na rota `/api/v1/analytics/mtbf?dias=N`.
+  - MTBF = horas em operação ÷ nº de falhas no período (7, 30, 90 dias ou 12 meses).
+  - Falha = parada com motivo **não programado**. Paradas programadas não contam como falha, mas descontam do tempo em operação.
+  - Mostra também o MTTR das falhas por máquina.
+- Exportação da base em **Excel** (`/api/v1/export.xlsx`), com as abas Paradas, MTBF, Pareto e Resumo. Os horários vêm em horário de Brasília e as colunas já vêm com filtro.
+- Testes do MTBF e do Excel (`tests/test_v21.py`).
+
+### Alterado
+- O botão "Baixar base (JSON)" do dashboard virou **"Baixar base (Excel)"**. A rota JSON `/api/v1/paradas` continua disponível para o Power BI.
+- Novas dependências: `openpyxl` (Excel) e `tzdata` (fuso horário).
+
 ## [2.0.1] — 2026-10-23
 ### Corrigido
 - Falha no deploy com PostgreSQL (`UniqueViolation: pg_type_typname_nsp_index`, chave `usuario`):
